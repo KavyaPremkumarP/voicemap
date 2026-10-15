@@ -1,0 +1,174 @@
+/* VoiceMap – style.css
+   Tailwind (index.html) handles layout and responsiveness.
+   This file adds accessibility details that utility classes do not cover. */
+
+/* ---------- Focus visibility (critical for keyboard users) ---------- */
+:focus-visible {
+  outline: 4px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+/* ---------- Buttons and form controls ---------- */
+.btn {
+  min-height: 44px;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.btn:hover {
+  filter: brightness(0.92);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+select,
+input[type="text"] {
+  min-height: 44px;
+}
+
+/* Mic button while listening */
+#micButton[aria-pressed="true"] {
+  background-color: #b42332;
+  animation: vm-pulse 1.2s ease-in-out infinite;
+}
+@keyframes vm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180, 35, 50, 0.6); }
+  50%      { box-shadow: 0 0 0 10px rgba(180, 35, 50, 0); }
+}
+
+/* ---------- Keyboard key hints ---------- */
+kbd {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border: 1px solid #94a3b8;
+  border-bottom-width: 3px;
+  border-radius: 0.35rem;
+  background: #f1f5f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+
+/* ---------- Place cards ---------- */
+.place-card {
+  padding: 0.875rem;
+  border: 1px solid #dbe4ef;
+  border-radius: 9px;
+  background: #fbfdff;
+  overflow-wrap: anywhere;
+}
+.place-card h3 {
+  margin: 0 0 0.5rem;
+}
+.place-card p {
+  margin: 0 0 0.35rem;
+  color: #526174;
+  font-size: 0.875rem;
+}
+.place-card.is-selected {
+  border-color: #1769aa;
+  box-shadow: 0 0 0 3px #1769aa55;
+  background: #eef6ff;
+}
+.place-name {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #124e96;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+.place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.place-actions .btn {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #1769aa;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* ---------- Map ---------- */
+#map {
+  z-index: 1;
+}
+
+/* ---------- High-contrast mode (JS toggles body.hc) ---------- */
+body.hc {
+  background: #000 !important;
+  color: #ffff00 !important;
+}
+body.hc .app-header {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border-bottom: 2px solid #ffff00;
+}
+body.hc .card,
+body.hc .status-box {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffff00 !important;
+  box-shadow: none !important;
+}
+body.hc .muted,
+body.hc footer {
+  color: #fff !important;
+}
+body.hc input,
+body.hc select {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+body.hc .btn {
+  background: #ffff00 !important;
+  color: #000 !important;
+  border: 2px solid #fff !important;
+}
+body.hc .place-card {
+  background: #000;
+  border-color: #ffff00;
+  color: #ffff00;
+}
+body.hc .place-card p {
+  color: #fff;
+}
+body.hc .place-card.is-selected {
+  background: #333;
+  box-shadow: 0 0 0 3px #00ffff;
+}
+body.hc .place-name {
+  color: #00ffff;
+}
+body.hc kbd {
+  background: #000;
+  color: #ffff00;
+  border-color: #ffff00;
+}
+body.hc a {
+  color: #00ffff !important;
+}
+body.hc :focus-visible {
+  outline-color: #00ffff;
+}
+
+/* ---------- Respect reduced-motion preference ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Print: show only the places list ---------- */
+@media print {
+  .app-header, form, #map, footer, .status-box, details { display: none !important; }
+}

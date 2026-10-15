@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VoiceMap: search any place, explore the map and listen to nearby places. Built for blind and low-vision users." />
+  <title>VoiceMap - Smart Voice Navigation</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-[#f2f6fc] text-slate-800 font-sans min-h-screen">
+  <a href="#locationInput" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[2000] focus:bg-white focus:text-black focus:p-3 focus:rounded">Skip to search</a>
+
+  <header class="app-header bg-gradient-to-br from-[#124e96] to-[#087eaa] text-white text-center px-4 py-7">
+    <h1 class="text-3xl md:text-4xl font-bold mb-2">🗺️ VoiceMap</h1>
+    <p>Search any place. Explore the map. Listen to nearby places.</p>
+    <div class="mt-4 flex justify-center flex-wrap gap-2">
+      <button id="contrastButton" type="button" aria-pressed="false" class="btn bg-white text-[#124e96] font-bold px-3 py-2 rounded-lg text-sm">High contrast</button>
+      <button id="textButton" type="button" aria-pressed="false" class="btn bg-white text-[#124e96] font-bold px-3 py-2 rounded-lg text-sm">Large text</button>
+    </div>
+  </header>
+
+  <noscript>
+    <p class="max-w-[1100px] mx-auto px-4 py-4 text-red-700 font-semibold">VoiceMap needs JavaScript to search places and speak results. Please enable JavaScript.</p>
+  </noscript>
+
+  <main class="max-w-[1100px] mx-auto my-6 px-4">
+
+    <!-- Search form -->
+    <form id="searchForm" novalidate class="flex flex-col sm:flex-row gap-2.5 mb-3.5" aria-label="Search for a location">
+      <div class="flex-1 min-w-0">
+        <label for="locationInput" class="sr-only">Place, address or landmark</label>
+        <input id="locationInput" name="location" type="text" autocomplete="off" required
+               aria-describedby="locationHelp locationError"
+               placeholder="Enter a place, address, or landmark..."
+               class="w-full p-3.5 border border-slate-300 rounded-[9px] text-base bg-white" />
+        <p id="locationHelp" class="sr-only">Type at least 3 characters, then press Enter to search.</p>
+        <p id="locationError" role="alert" class="hidden mt-1 text-sm font-semibold text-[#b42332]"></p>
+      </div>
+      <button id="searchButton" type="submit" class="btn sm:self-start bg-[#1769aa] text-white font-bold px-5 py-3 rounded-lg w-full sm:w-auto">Search</button>
+    </form>
+
+    <!-- Voice controls -->
+    <div class="flex flex-wrap items-center gap-2.5 my-3" role="group" aria-label="Voice controls">
+      <button id="speakLocationButton" type="button" class="btn bg-[#1769aa] text-white font-bold px-4 py-3 rounded-lg">🔊 Speak location</button>
+      <button id="speakAllButton" type="button" class="btn bg-[#1769aa] text-white font-bold px-4 py-3 rounded-lg">🗣️ Read nearby places</button>
+      <button id="micButton" type="button" aria-pressed="false" class="btn bg-[#0f7b4f] text-white font-bold px-4 py-3 rounded-lg">🎤 Voice command</button>
+      <button id="locateButton" type="button" class="btn bg-slate-700 text-white font-bold px-4 py-3 rounded-lg">📍 Use my location</button>
+      <button id="stopButton" type="button" class="btn bg-[#b42332] text-white font-bold px-4 py-3 rounded-lg">⏹ Stop voice</button>
+      <label for="rateInput" class="flex items-center gap-2 text-sm font-semibold ml-1">
+        Speed <span id="rateLabel" class="w-10">0.9×</span>
+        <input id="rateInput" type="range" min="0.6" max="1.6" step="0.1" value="0.9" class="w-28" />
+      </label>
+    </div>
+
+    <p id="statusMessage" role="status" aria-live="polite" class="status-box bg-white px-3.5 py-3 rounded-lg break-words">Enter a location to get started.</p>
+    <p id="voiceStatus" role="status" aria-live="polite" class="status-box bg-white px-3.5 py-3 rounded-lg break-words mt-3">Voice ready.</p>
+
+    <!-- Map -->
+    <section class="card bg-white mt-5 p-4 rounded-xl shadow-[0_3px_14px_#102a4310]" aria-labelledby="mapHeading">
+      <h2 id="mapHeading" class="sr-only">Map</h2>
+      <div id="map" role="region" aria-label="Interactive location map" class="w-full h-[340px] md:h-[430px] rounded-[9px]"></div>
+      <p class="muted text-sm text-slate-600 mt-2">
+        Live OpenStreetMap view.
+        <a id="osmLink" class="underline" href="https://www.openstreetmap.org/#map=5/20.594/78.963" target="_blank" rel="noopener">Open this view on openstreetmap.org</a>
+      </p>
+    </section>
+
+    <!-- Nearby places -->
+    <section class="card bg-white mt-5 p-4 rounded-xl shadow-[0_3px_14px_#102a4310]" aria-labelledby="placesHeading">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="placesHeading" class="text-2xl font-bold mt-1 mb-3">Nearby places</h2>
+        <div class="flex items-center gap-2">
+          <label for="categoryFilter" class="sr-only">Filter nearby places</label>
+          <select id="categoryFilter" class="p-2.5 border border-slate-300 rounded-lg bg-white text-sm">
+            <option value="all">All places</option>
+            <option value="hospital">Hospitals</option>
+            <option value="pharmacy">Pharmacies</option>
+            <option value="restaurant">Restaurants</option>
+            <option value="cafe">Cafés</option>
+            <option value="atm">ATMs</option>
+            <option value="bus_stop">Bus stops</option>
+          </select>
+        </div>
+      </div>
+      <div id="results" class="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3">
+        <p>Search for a location to discover nearby places.</p>
+      </div>
+    </section>
+
+    <!-- Help -->
+    <details class="card bg-white mt-5 p-4 rounded-xl shadow-[0_3px_14px_#102a4310]">
+      <summary class="cursor-pointer font-bold">Keyboard and voice help</summary>
+      <ul class="list-disc pl-5 mt-3 space-y-1 muted text-slate-700">
+        <li>Click a place name (or press <kbd>Enter</kbd> on it) to hear its details and see it on the map.</li>
+        <li><kbd>↑</kbd> / <kbd>↓</kbd> on a place name moves between places and reads each one. <kbd>Home</kbd> / <kbd>End</kbd> jump to first / last.</li>
+        <li><kbd>/</kbd> jumps to the search box. <kbd>R</kbd> repeats the last message. <kbd>Esc</kbd> stops speech.</li>
+        <li>Voice commands: “search for Cubbon Park”, “show hospitals”, “show all”, “read nearby”, “next”, “previous”, “read”, “repeat”, “where am I”, “use my location”, “stop”.</li>
+      </ul>
+    </details>
+  </main>
+
+  <footer class="text-center p-6 text-slate-500">VoiceMap · OpenStreetMap · Browser Speech</footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
